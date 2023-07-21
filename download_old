@@ -8,18 +8,29 @@ if [ ! -d "debs" ];  then
     mkdir debs
 fi
 
-SOURCE="http://old-releases.ubuntu.com/ubuntu/pool/main/g/glibc"
+SOURCE="http://old-releases.ubuntu.com"
+# Use the source below if you feel slow, or change it on your own.
+# SOURCE="https://mirrors.ustc.edu.cn/ubuntu-old-releases"
 
-LIBC_PREFIX="libc6_"
-LIBC_DBG_PREFIX="libc6-dbg_"
+exit_succeed() {
+  echo >&2 $1
+  exit 0
+}
 
-die() {
+exit_failed() {
   echo >&2 $1
   exit 1
 }
 
+exit_interrupt() {
+  echo >&2 $1
+  exit 2
+}
+
 usage() {
-  echo >&2 "Usage: $0 id"
+  echo >&2 "Usage: $0 <id> [source=http://old-releases.ubuntu.com]"
+  echo >&2 "e.g.   $0 2.26-0ubuntu2.1_amd64"
+  echo >&2 "       $0 2.34-0ubuntu3.2_amd64 https://mirrors.ustc.edu.cn/ubuntu-old-releases"
   exit 2
 }
 
@@ -29,14 +40,17 @@ download_single() {
   local dbg_name=$LIBC_DBG_PREFIX$id.deb
   echo "Getting $id"
   if [ -d "libs/$id" ]; then
-    die "  --> Downloaded before. Remove it to download again."
+    exit_succeed "  --> Downloaded before."
   fi
 
   # download binary package
-  local url="$SOURCE/$deb_name"
+  local url="$SOURCE$deb_name"
   echo "  -> Location: $url"
   echo "  -> Downloading libc binary package"
-  wget "$url" 2>/dev/null -O debs/$deb_name || die "Failed to download package from $url"
+  wget -c --tries=0 --retry-connrefused --timeout=10 --waitretry=5 -O debs/$deb_name $url
+  if test $? -ne 0; then
+    exit_failed "Failed to download package from $url"
+  fi
   echo "  -> Extracting libc binary package"
 
   mkdir libs/$id
@@ -44,18 +58,34 @@ download_single() {
   echo "  -> Package saved to libs/$id"
 
   # download debug info package
-  local url="$SOURCE/$dbg_name"
+  local url="$SOURCE$dbg_name"
   echo "  -> Location: $url"
   echo "  -> Downloading libc debug package"
-  wget "$url" 2>/dev/null -O debs/$dbg_name || die "Failed to download package from $url"
+  wget -c --tries=0 --retry-connrefused --timeout=10 --waitretry=5 -O debs/$dbg_name $url
+  if test $? -ne 0; then
+    exit_failed "Failed to download package from $url"
+  fi
   echo "  -> Extracting libc debug package"
 
   mkdir libs/$id/.debug
   ./extract debs/$dbg_name libs/$id/.debug
-  echo "  -> Package saved to libs/$id/.debug"
+  exit_succeed "  -> Package saved to libs/$id/.debug"
 }
 
 if [[ $# != 1 ]]; then
-  usage
+  if [[ $# != 2 ]]; then
+    usage
+  fi
+  SOURCE=$2
 fi
+if test ${SOURCE:0-1} != '/'; then
+  SOURCE="$SOURCE/"
+fi
+SOURCE="${SOURCE}ubuntu/pool/main/g/glibc/"
+echo "[!] Current source: $SOURCE"
+
+LIBC_PREFIX="libc6_"
+LIBC_DBG_PREFIX="libc6-dbg_"
+
+trap 'exit_interrupt "Download interrupted."' INT
 download_single "$1"
