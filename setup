@@ -31,6 +31,8 @@ cat './list' | while read line; do
         echo "[!] Please run me again to finish setup."
         exit 1
     fi
+    echo "[O] Unstripping glibc ..."
+    ./unstrip $VERSION $BUILD
 done
 if test $? -ne 0; then
     exit 1
@@ -46,9 +48,12 @@ cat './old_list' | while read line; do
         echo "[!] Please run me again to finish setup."
         exit 1
     fi
+    echo "[O] Unstripping glibc ..."
+    ./unstrip $VERSION $BUILD
 done
 if test $? -ne 0; then
     exit 1
 fi
+
 echo "[O] Glibc setup is done."
 exit 0

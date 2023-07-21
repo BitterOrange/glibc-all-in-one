@@ -63,9 +63,9 @@ function unstrip {
 }
 
 if test $# -ne 2; then
-    echo "Usage: ./unstrip <version> <build>"
-    echo "e.g. ./unstrip 2.31 0ubuntu9.9_amd64"
-    exit
+    echo "Usage: $0 <version> <build>"
+    echo "e.g.   $0 2.31 0ubuntu9.9_amd64"
+    exit 3
 fi
 unstrip $1 $2
-
+exit 0
