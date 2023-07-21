@@ -1,0 +1,71 @@
+#!/bin/bash
+
+function unstrip_file {
+    # unstrip <version> <build> <filename>
+    VERSION=$1
+    BUILD=$2
+    FILENAME=$3
+
+    GLIBC_DIR=("./libs/$VERSION-$BUILD/")
+    TARGET_DIR="$GLIBC_DIR.unstripped/"
+    STRIPPED_FILE=("$GLIBC_DIR""$FILENAME")
+    if [ ! -f $STRIPPED_FILE ]; then
+        echo "[X] Target stripped file ($STRIPPED_FILE) doesn't exist."
+        echo "[X] Expected path: $STRIPPED_FILE."
+        return 1
+    fi
+    # echo "Build ID: $BUILD_ID"
+    DEBUG_FILE=("$GLIBC_DIR.debug/$FILENAME")
+    if [ ! -f $DEBUG_FILE ]; then
+        BUILD_ID=$(readelf -n $STRIPPED_FILE)
+        BUILD_ID="${BUILD_ID#*'Build ID: '}"
+        BUILD_ID="${BUILD_ID::40}"
+        DEBUG_FILE=("$GLIBC_DIR.debug/.build-id/${BUILD_ID::2}/${BUILD_ID:2}.debug")
+        if [ ! -f $DEBUG_FILE ]; then
+            echo "[?] Target debug file ($DEBUG_FILE) doesn't exist. Copying raw file ($STRIPPED_FILE)."
+            cp $STRIPPED_FILE $TARGET_DIR
+            # echo "[X] Expected path: $DEBUG_FILE."
+            return 1
+        fi
+    fi
+
+    # Unstrip it!
+    echo "[O] Unstripping $STRIPPED_FILE for file $FILENAME."
+    cp $DEBUG_FILE $TARGET_DIR$FILENAME
+    eu-unstrip $STRIPPED_FILE $TARGET_DIR$FILENAME
+    return 0
+}
+
+
+function unstrip {
+    VERSION=$1
+    BUILD=$2
+    
+    TARGET_DIR="./libs/$VERSION-$BUILD/.unstripped/"
+    if [ ! -d $TARGET_DIR ]; then
+        mkdir $TARGET_DIR
+    fi
+    
+    TARGET_DIR="$GLIBC_DIR.unstripped/"
+    if [ ! -d $GLIBC_DIR ]; then
+        echo "[X] Glibc path of target version ($VERSION-$BUILD) doesn't exist."
+        echo "[X] Expected path: $GLIBC_DIR."
+        return
+    fi
+    
+    for file in $(ls "./libs/$VERSION-$BUILD/")
+        do
+            if [ -f "./libs/$VERSION-$BUILD/$file" ] && [ ! -L "./libs/$VERSION-$BUILD/$file" ]; then
+                # echo "./libs/$VERSION-$BUILD/$file"
+                unstrip_file $VERSION $BUILD $file
+            fi
+        done
+}
+
+if test $# -ne 2; then
+    echo "Usage: ./unstrip <version> <build>"
+    echo "e.g. ./unstrip 2.31 0ubuntu9.9_amd64"
+    exit
+fi
+unstrip $1 $2
+

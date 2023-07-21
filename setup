@@ -1,0 +1,54 @@
+#!/bin/bash
+SOURCE="http://archive.ubuntu.com"
+SOURCE_OLD="http://old-releases.ubuntu.com"
+
+if test $# -ne 0; then
+    if test $# -ne 2; then
+        echo "Usage: $0 <source> <source_old>"
+        echo "       $0 (= $0 $SOURCE $SOURCE_OLD)"
+        echo "e.g.   $0 <source> <source_old>"
+        echo "       $0 https://mirrors.ustc.edu.cn https://mirrors.ustc.edu.cn/ubuntu-old-releases"
+        exit 1
+    fi
+    SOURCE=$1
+    SOURCE_OLD=$2
+fi
+
+echo "[O] Updating glibc release list ..."
+./update_list
+if test $? -ne 0; then
+    echo "[X] Updating failed."
+    echo "[!] Please run me again to finish setup."
+    exit 1
+fi
+cat './list' | while read line; do
+    VERSION=${line%-*}
+    BUILD=${line#*-}
+    echo "[O] Downloading $VERSION $BUILD ..."
+    ./download "$VERSION-$BUILD" $SOURCE
+    if test $download_result -eq 2; then
+        echo "[X] Download has not been done yet."
+        echo "[!] Please run me again to finish setup."
+        exit 1
+    fi
+done
+if test $? -ne 0; then
+    exit 1
+fi
+cat './old_list' | while read line; do
+    VERSION=${line%-*}
+    BUILD=${line#*-}
+    echo "[O] Downloading $VERSION $BUILD ..."
+    ./download_old "$VERSION-$BUILD" $SOURCE_OLD
+    download_result=$?
+    if test $download_result -eq 2; then
+        echo "[X] Download has not been done yet."
+        echo "[!] Please run me again to finish setup."
+        exit 1
+    fi
+done
+if test $? -ne 0; then
+    exit 1
+fi
+echo "[O] Glibc setup is done."
+exit 0
