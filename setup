@@ -26,7 +26,7 @@ cat './list' | while read line; do
     BUILD=${line#*-}
     echo "[O] Downloading $VERSION $BUILD ..."
     ./download "$VERSION-$BUILD" $SOURCE
-    if test $download_result -eq 2; then
+    if test $? -eq 2; then
         echo "[X] Download has not been done yet."
         echo "[!] Please run me again to finish setup."
         exit 1
@@ -42,8 +42,7 @@ cat './old_list' | while read line; do
     BUILD=${line#*-}
     echo "[O] Downloading $VERSION $BUILD ..."
     ./download_old "$VERSION-$BUILD" $SOURCE_OLD
-    download_result=$?
-    if test $download_result -eq 2; then
+    if test $? -eq 2; then
         echo "[X] Download has not been done yet."
         echo "[!] Please run me again to finish setup."
         exit 1
