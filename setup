@@ -24,6 +24,10 @@ fi
 cat './list' | while read line; do
     VERSION=${line%-*}
     BUILD=${line#*-}
+    if [ -d "libs/$VERSION-$BUILD/" ]; then
+        echo "[!] Download of ($VERSION-$BUILD) has been done already."
+        continue
+    fi
     echo "[O] Downloading $VERSION $BUILD ..."
     ./download "$VERSION-$BUILD" $SOURCE
     if test $? -eq 2; then
@@ -40,6 +44,10 @@ fi
 cat './old_list' | while read line; do
     VERSION=${line%-*}
     BUILD=${line#*-}
+    if [ -d "libs/$VERSION-$BUILD/" ]; then
+        echo "[!] Download of ($VERSION-$BUILD) has been done already."
+        continue
+    fi
     echo "[O] Downloading $VERSION $BUILD ..."
     ./download_old "$VERSION-$BUILD" $SOURCE_OLD
     if test $? -eq 2; then

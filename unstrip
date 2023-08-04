@@ -33,6 +33,7 @@ function unstrip_file {
     echo "[O] Unstripping $STRIPPED_FILE for file $FILENAME."
     cp $DEBUG_FILE $TARGET_DIR$FILENAME
     eu-unstrip $STRIPPED_FILE $TARGET_DIR$FILENAME
+    chmod 755 $TARGET_DIR$FILENAME
     return 0
 }
 
