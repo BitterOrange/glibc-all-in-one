@@ -26,6 +26,8 @@ cat './list' | while read line; do
     BUILD=${line#*-}
     if [ -d "libs/$VERSION-$BUILD/" ]; then
         echo "[!] Download of ($VERSION-$BUILD) has been done already."
+        echo "[O] Unstripping glibc ..."
+        ./unstrip $VERSION $BUILD
         continue
     fi
     echo "[O] Downloading $VERSION $BUILD ..."
@@ -46,6 +48,8 @@ cat './old_list' | while read line; do
     BUILD=${line#*-}
     if [ -d "libs/$VERSION-$BUILD/" ]; then
         echo "[!] Download of ($VERSION-$BUILD) has been done already."
+        echo "[O] Unstripping glibc ..."
+        ./unstrip $VERSION $BUILD
         continue
     fi
     echo "[O] Downloading $VERSION $BUILD ..."
